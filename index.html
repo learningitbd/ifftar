@@ -83,7 +83,7 @@
     
     <div class="form-group">
         <label>আপনার নাম:</label>
-        <input type="text" id="userName" placeholder="নাম লিখুন">
+        <input type="text" id="userName" placeholder="বাংলাই আপনার নাম লিখুন">
     </div>
     
     <div class="form-group">
@@ -99,7 +99,7 @@
     <button class="btn-generate" onclick="generateBanner()">ব্যানার তৈরি করুন</button>
 
     <div id="resultArea">
-        <h3 style="color: #27ae60;">ব্যানারটি তৈরি হয়েছে!</h3>
+        <h3 style="color: #27ae60;">ব্যানারটি তৈরি হয়েছে! ডাউনলোড করুন এবং সোশ্যাল মিডিয়াতে শেয়ার করুন</h3>
         <canvas id="bannerCanvas" width="1000" height="1000"></canvas>
         <br>
         <a id="downloadLink" class="btn-download">ডাউনলোড করুন</a>
@@ -111,7 +111,6 @@
     const ctx = canvas.getContext('2d');
     const templateImg = new Image();
     
-    // টেম্পলেট ছবির পাথ (আপনার মূল ফাইলের নাম এখানে দিন)
     templateImg.src = 'template.jpg'; 
 
     function generateBanner() {
@@ -131,32 +130,25 @@
         reader.onload = function(event) {
             const userImg = new Image();
             userImg.onload = function() {
-                // ৩. পজিশন সেটিংস (যদি ছবি ছোট বা বড় লাগে তবে x, y, w, h পরিবর্তন করুন)
-                // ছবিকে বর্ডারের মাপ অনুযায়ী সেট করার জন্য সাইজ এবং পজিশন অ্যাডজাস্ট করা হয়েছে
                 const x = 210, y = 225, w = 310, h = 330; 
                 const radius = 10;
                 const borderSize = 3;
 
-                // ১. ক্লিপিং পাথ তৈরি (ছবিকে রাউন্ড করার জন্য)
                 ctx.save();
                 roundRectPath(ctx, x, y, w, h, radius);
                 ctx.clip();
 
-                // ২. ছবি ড্র করা
                 let scale = Math.max(w / userImg.width, h / userImg.height);
                 let xCenter = (w - userImg.width * scale) / 2;
                 let yCenter = (h - userImg.height * scale) / 2;
                 ctx.drawImage(userImg, x + xCenter, y + yCenter, userImg.width * scale, userImg.height * scale);
                 ctx.restore();
 
-                // ৩. ছবির বর্ডার ড্র করা (ছবির উপরে ৩ পিক্সেল বর্ডার)
                 ctx.strokeStyle = "#d09e3b";
                 ctx.lineWidth = borderSize;
-                // ছবির চারপাশে বর্ডার সেট করার জন্য বর্ডারের মাপ অনুযায়ী x এবং y পজিশন অ্যাডজাস্ট করা হয়েছে
                 roundRectPath(ctx, x - borderSize/2, y - borderSize/2, w + borderSize, h + borderSize, radius);
                 ctx.stroke();
 
-                // ৪. নাম এবং ব্যাচ ওভারলে ড্র করা
                 drawTextOverlay(name, batch);
 
                 document.getElementById('resultArea').style.display = 'block';
@@ -170,7 +162,6 @@
         reader.readAsDataURL(photoInput.files[0]);
     }
 
-    // রাউন্ডেড রেকট্যাঙ্গেল পাথ তৈরির ফাংশন (সব ব্রাউজারের জন্য)
     function roundRectPath(context, x, y, width, height, radius) {
         context.beginPath();
         context.moveTo(x + radius, y);
