@@ -111,6 +111,7 @@
     const ctx = canvas.getContext('2d');
     const templateImg = new Image();
     
+    // টেম্পলেট ছবির পাথ (আপনার মূল ফাইলের নাম এখানে দিন)
     templateImg.src = 'template.jpg'; 
 
     function generateBanner() {
@@ -130,7 +131,8 @@
         reader.onload = function(event) {
             const userImg = new Image();
             userImg.onload = function() {
-                // পজিশন সেটিংস
+                // ৩. পজিশন সেটিংস (যদি ছবি ছোট বা বড় লাগে তবে x, y, w, h পরিবর্তন করুন)
+                // ছবিকে বর্ডারের মাপ অনুযায়ী সেট করার জন্য সাইজ এবং পজিশন অ্যাডজাস্ট করা হয়েছে
                 const x = 210, y = 225, w = 310, h = 330; 
                 const radius = 10;
                 const borderSize = 3;
@@ -150,10 +152,11 @@
                 // ৩. ছবির বর্ডার ড্র করা (ছবির উপরে ৩ পিক্সেল বর্ডার)
                 ctx.strokeStyle = "#d09e3b";
                 ctx.lineWidth = borderSize;
+                // ছবির চারপাশে বর্ডার সেট করার জন্য বর্ডারের মাপ অনুযায়ী x এবং y পজিশন অ্যাডজাস্ট করা হয়েছে
                 roundRectPath(ctx, x - borderSize/2, y - borderSize/2, w + borderSize, h + borderSize, radius);
                 ctx.stroke();
 
-                // ৪. নাম এবং ব্যাচ ওভারলে
+                // ৪. নাম এবং ব্যাচ ওভারলে ড্র করা
                 drawTextOverlay(name, batch);
 
                 document.getElementById('resultArea').style.display = 'block';
