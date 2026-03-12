@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ইফতার মাহফিল ব্যানার</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f7f6;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            margin: 0;
+        }
+        .container {
+            background: #ffffff;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+        }
+        h2 { color: #2c3e50; margin-bottom: 20px; }
+        .input-group { text-align: left; margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; color: #34495e; }
+        input[type="text"], input[type="file"] {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #dcdfe6;
+            border-radius: 8px;
+            box-sizing: border-box;
+            outline: none;
+        }
+        
+        .btn-generate {
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 8px;
+            background: linear-gradient(45deg, #e74c3c, #f39c12);
+            color: white;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: 0.3s;
+        }
+        .btn-generate:hover { opacity: 0.9; transform: translateY(-2px); }
+        
+        canvas {
+            max-width: 100%;
+            height: auto;
+            border-radius: 10px;
+            margin-top: 25px;
+            display: none;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+        }
+        
+        .download-btn {
+            display: none;
+            margin-top: 20px;
+            padding: 12px 30px;
+            background-color: #27ae60;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>ব্যানার তৈরি করুন</h2>
+    
+    <div class="input-group">
+        <label>আপনার নাম:</label>
+        <input type="text" id="userName" placeholder="যেমন: জামিউল হাসান সোহান">
+    </div>
+    
+    <div class="input-group">
+        <label>ব্যাচ নম্বর:</label>
+        <input type="text" id="batchNo" placeholder="যেমন: ২০২২">
+    </div>
+    
+    <div class="input-group">
+        <label>আপনার ছবি আপলোড করুন:</label>
+        <input type="file" id="imageInput" accept="image/*">
+    </div>
+    
+    <button class="btn-generate" onclick="generateBanner()">ব্যানার তৈরি করুন</button>
+</div>
+
+<canvas id="outputCanvas" width="1024" height="1024"></canvas>
+<a id="downloadLink" class="download-btn">ছবিটি ডাউনলোড করুন</a>
+
+<script>
+    function generateBanner() {
+        const canvas = document.getElementById('outputCanvas');
+        const ctx = canvas.getContext('2d');
+        const name = document.getElementById('userName').value;
+        const batch = document.getElementById('batchNo').value;
+        const fileInput = document.getElementById('imageInput');
+
+        if (!name || !batch || !fileInput.files[0]) {
+            alert("দয়া করে সব তথ্য পূরণ করুন এবং ছবি আপলোড করুন!");
+            return;
+        }
+
+        const template = new Image();
+        template.src = 'template.jpg'; 
+
+        template.onload = function() {
+            ctx.drawImage(template, 0, 0, 1024, 1024);
+
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const userImg = new Image();
+                userImg.onload = function() {
+                    const imgX = 148, imgY = 195, imgW = 250, imgH = 275;
+                    
+                    ctx.save();
+                    ctx.beginPath();
+                    ctx.rect(imgX, imgY, imgW, imgH);
+                    ctx.clip();
+                    ctx.drawImage(userImg, imgX, imgY, imgW, imgH);
+                    ctx.restore();
+
+                    const grad = ctx.createLinearGradient(110, 480, 230, 530);
+                    grad.addColorStop(0, "#e74c3c"); 
+                    grad.addColorStop(1, "#f39c12"); 
+                    ctx.fillStyle = grad;
+                    
+                    drawRoundedRect(ctx, 110, 480, 115, 52, 6);
+                    ctx.fill();
+
+                    ctx.fillStyle = "white";
+                    ctx.font = "bold 28px Arial";
+                    ctx.textAlign = "center";
+                    ctx.fillText(batch, 167, 516);
+
+                    ctx.fillStyle = "#2c3e50";
+                    ctx.font = "bold 35px Arial";
+                    ctx.textAlign = "left";
+                    ctx.fillText(name, 240, 516);
+
+                    canvas.style.display = "block";
+                    const dlBtn = document.getElementById('downloadLink');
+                    dlBtn.style.display = "inline-block";
+                    dlBtn.href = canvas.toDataURL("image/jpeg", 0.95);
+                    dlBtn.download = "Iftar_Mahfil_Banner.jpg";
+                    
+                    window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+                };
+                userImg.src = event.target.result;
+            };
+            reader.readAsDataURL(fileInput.files[0]);
+        };
+
+        template.onerror = function() {
+            alert("Error: 'template.jpg' ফাইলটি খুঁজে পাওয়া যায়নি। নিশ্চিত করুন যে আপনার মূল ছবিটি একই ফোল্ডারে আছে।");
+        };
+    }
+
+    function drawRoundedRect(ctx, x, y, width, height, radius) {
+        ctx.beginPath();
+        ctx.moveTo(x + radius, y);
+        ctx.lineTo(x + width - radius, y);
+        ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+        ctx.lineTo(x + width, y + height - radius);
+        ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+        ctx.lineTo(x + radius, y + height);
+        ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+        ctx.lineTo(x, y + radius);
+        ctx.quadraticCurveTo(x, y, x + radius, y);
+        ctx.closePath();
+    }
+</script>
+
+</body>
+</html>
