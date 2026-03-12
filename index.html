@@ -3,136 +3,183 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ব্যানার এডিটর</title>
+    <title>ইফতার মাহফিল ব্যানার জেনারেটর</title>
     <style>
-        body { font-family: 'Arial', sans-serif; background-color: #f0f2f5; display: flex; flex-direction: column; align-items: center; padding: 20px; }
-        .container { background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); max-width: 450px; width: 100%; text-align: center; }
-        .input-group { text-align: left; margin-bottom: 15px; }
-        label { font-weight: bold; display: block; margin-bottom: 5px; }
-        input { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
-        
-        .btn-generate {
-            width: 100%; padding: 15px; border: none; border-radius: 8px;
-            background: linear-gradient(45deg, #ff4b2b, #ff8c00);
-            color: white; font-size: 18px; font-weight: bold; cursor: pointer;
+        /* CSS Style */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f2f5;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            margin: 0;
         }
-        
-        canvas { max-width: 100%; height: auto; border-radius: 8px; margin-top: 20px; display: none; border: 1px solid #ddd; }
-        .download-btn { display: none; margin-top: 15px; padding: 12px 25px; background: #27ae60; color: white; text-decoration: none; border-radius: 6px; font-weight: bold; }
+        .container {
+            background: #fff;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+        }
+        h2 { color: #2c3e50; margin-bottom: 20px; }
+        .input-group { margin-bottom: 20px; }
+        input {
+            width: 90%;
+            padding: 12px;
+            margin: 8px 0;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        canvas {
+            width: 100%;
+            max-width: 400px;
+            height: auto;
+            border: 2px solid #e67e22;
+            border-radius: 10px;
+            margin-top: 15px;
+            display: block;
+        }
+        .btn-download {
+            background: linear-gradient(to right, #ff8c00, #ff4500);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 50px;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: 0.3s;
+            box-shadow: 0 4px 15px rgba(255, 69, 0, 0.3);
+        }
+        .btn-download:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 69, 0, 0.4);
+        }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>ব্যানার ইনফো পরিবর্তন</h2>
+    <h2>ব্যানার ডিজাইন করুন</h2>
     
     <div class="input-group">
-        <label>নতুন নাম লিখুন:</label>
-        <input type="text" id="userName" placeholder="নাম লিখুন">
+        <input type="text" id="userName" placeholder="আপনার নাম লিখুন">
+        <input type="text" id="userBatch" placeholder="আপনার ব্যাচ (যেমন: ২০১৫)">
+        <p style="font-size: 12px; color: #666;">আপনার ছবি আপলোড করুন:</p>
+        <input type="file" id="userPhoto" accept="image/*">
     </div>
+
+    <canvas id="bannerCanvas" width="1000" height="1000" style="display:none;"></canvas>
+    <canvas id="previewCanvas" width="1000" height="1000"></canvas>
     
-    <div class="input-group">
-        <label>নতুন ব্যাচ লিখুন:</label>
-        <input type="text" id="batchNo" placeholder="যেমন: ২০২৩">
-    </div>
-    
-    <div class="input-group">
-        <label>আপনার ছবি বেছে নিন:</label>
-        <input type="file" id="imageInput" accept="image/*">
-    </div>
-    
-    <button class="btn-generate" onclick="createBanner()">ব্যানার আপডেট করুন</button>
+    <button class="btn-download" id="downloadBtn">ডাউনলোড / শেয়ার করুন</button>
 </div>
 
-<canvas id="canvas" width="1024" height="1024"></canvas>
-<a id="downloadBtn" class="download-btn">ডাউনলোড করুন</a>
-
 <script>
-    function createBanner() {
-        const canvas = document.getElementById('canvas');
-        const ctx = canvas.getContext('2d');
-        const name = document.getElementById('userName').value;
-        const batch = document.getElementById('batchNo').value;
-        const fileInput = document.getElementById('imageInput');
+    const canvas = document.getElementById('bannerCanvas');
+    const previewCanvas = document.getElementById('previewCanvas');
+    const ctx = canvas.getContext('2d');
+    const pCtx = previewCanvas.getContext('2d');
 
-        if (!name || !batch || !fileInput.files[0]) {
-            alert("দয়া করে সব তথ্য দিন!");
-            return;
-        }
+    const userNameInput = document.getElementById('userName');
+    const userBatchInput = document.getElementById('userBatch');
+    const userPhotoInput = document.getElementById('userPhoto');
+    const downloadBtn = document.getElementById('downloadBtn');
 
-        const template = new Image();
-        template.src = 'template.jpg'; // আপনার মূল ছবির নাম এটি হতে হবে
+    const templateImg = new Image();
+    // আপনার টেমপ্লেট ইমেজের সোর্স এখানে দিন
+    templateImg.src = 'template.jpg'; 
 
-        template.onload = function() {
-            // ১. মূল ছবি ড্র করা
-            ctx.drawImage(template, 0, 0, 1024, 1024);
+    templateImg.onload = () => {
+        updateCanvas();
+    };
 
-            // ২. আগের তথ্যগুলো মুছে ফেলা (Hide original text)
-            // ব্যাচ বক্সের জায়গাটা সাদা করে দিচ্ছি
-            ctx.fillStyle = "#fcfcfc"; // ছবির ব্যাকগ্রাউন্ড কালার অনুযায়ী
-            ctx.fillRect(105, 475, 125, 65); // ব্যাচ এরিয়া
-            ctx.fillRect(235, 475, 400, 65); // নাম এরিয়া
+    function updateCanvas() {
+        // মেইন ক্যানভাস ক্লিয়ার করে টেমপ্লেট ড্র করা
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(templateImg, 0, 0, canvas.width, canvas.height);
 
-            // ৩. ইউজারের ছবি ড্র করা
+        const name = userNameInput.value || "আপনার নাম";
+        const batch = userBatchInput.value || "২০১৫";
+
+        if (userPhotoInput.files && userPhotoInput.files[0]) {
             const reader = new FileReader();
-            reader.onload = function(event) {
+            reader.onload = function(e) {
                 const userImg = new Image();
                 userImg.onload = function() {
-                    const x=148, y=195, w=250, h=275;
+                    // ছবির বক্স পজিশন (আপনার টেমপ্লেট অনুযায়ী অ্যাডজাস্ট করা)
+                    const x = 210, y = 225, w = 310, h = 330;
+                    
+                    // ছবি কভার মোডে ড্র করা (Crop & Fit)
+                    let ratio = Math.max(w / userImg.width, h / userImg.height);
+                    let centerShiftX = (w - userImg.width * ratio) / 2;
+                    let centerShiftY = (h - userImg.height * ratio) / 2;
+                    
                     ctx.save();
                     ctx.beginPath();
                     ctx.rect(x, y, w, h);
                     ctx.clip();
-                    ctx.drawImage(userImg, x, y, w, h);
+                    ctx.drawImage(userImg, 0, 0, userImg.width, userImg.height, x + centerShiftX, y + centerShiftY, userImg.width * ratio, userImg.height * ratio);
                     ctx.restore();
 
-                    // ৪. নতুন ব্যাচ বক্স (Gradient)
-                    const grad = ctx.createLinearGradient(110, 480, 230, 530);
-                    grad.addColorStop(0, "#ff4b2b");
-                    grad.addColorStop(1, "#ff8c00");
-                    ctx.fillStyle = grad;
-                    
-                    drawRoundedRect(ctx, 110, 480, 115, 52, 8);
-                    ctx.fill();
-
-                    // ৫. নতুন ব্যাচ টেক্সট
-                    ctx.fillStyle = "white";
-                    ctx.font = "bold 28px Arial";
-                    ctx.textAlign = "center";
-                    ctx.fillText(batch, 167, 516);
-
-                    // ৬. নতুন নাম টেক্সট
-                    ctx.fillStyle = "#333";
-                    ctx.font = "bold 35px Arial";
-                    ctx.textAlign = "left";
-                    ctx.fillText(name, 240, 516);
-
-                    // রেজাল্ট দেখানো
-                    canvas.style.display = "block";
-                    const dl = document.getElementById('downloadBtn');
-                    dl.style.display = "inline-block";
-                    dl.href = canvas.toDataURL("image/jpeg", 1.0);
-                    dl.download = "updated_banner.jpg";
-                };
-                userImg.src = event.target.result;
-            };
-            reader.readAsDataURL(fileInput.files[0]);
-        };
+                    renderOverlay(name, batch);
+                }
+                userImg.src = e.target.result;
+            }
+            reader.readAsDataURL(userPhotoInput.files[0]);
+        } else {
+            renderOverlay(name, batch);
+        }
     }
 
-    function drawRoundedRect(ctx, x, y, width, height, radius) {
+    function renderOverlay(name, batch) {
+        // ১. ব্যাচ বাটন (অরেঞ্জ-রেড গ্রেডিয়েন্ট)
+        const bx = 205, by = 605, bw = 165, bh = 65;
+        const grad = ctx.createLinearGradient(bx, by, bx + bw, by);
+        grad.addColorStop(0, "#ff8c00"); 
+        grad.addColorStop(1, "#ed1c24"); 
+
+        ctx.fillStyle = grad;
+        // Rounded Rectangle
         ctx.beginPath();
-        ctx.moveTo(x + radius, y);
-        ctx.lineTo(x + width - radius, y);
-        ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
-        ctx.lineTo(x + width, y + height - radius);
-        ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
-        ctx.lineTo(x + radius, y + height);
-        ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
-        ctx.lineTo(x, y + radius);
-        ctx.quadraticCurveTo(x, y, x + radius, y);
-        ctx.closePath();
+        ctx.roundRect(bx, by, bw, bh, 35);
+        ctx.fill();
+
+        // ব্যাচ টেক্সট
+        ctx.fillStyle = "#ffffff";
+        ctx.font = "bold 35px 'SolaimanLipi', Arial";
+        ctx.textAlign = "center";
+        ctx.fillText(batch, bx + bw/2, by + 45);
+
+        // ২. ইউজারের নাম
+        ctx.fillStyle = "#1a2a3a"; // গাঢ় রঙ যেন ফুটে ওঠে
+        ctx.font = "bold 42px 'SolaimanLipi', Arial";
+        ctx.textAlign = "left";
+        ctx.fillText(name, 385, 652);
+
+        // প্রিভিউ ক্যানভাসে কপি করা
+        pCtx.clearRect(0, 0, previewCanvas.width, previewCanvas.height);
+        pCtx.drawImage(canvas, 0, 0);
     }
+
+    // ইনপুট ইভেন্ট লিসেনার
+    userNameInput.addEventListener('input', updateCanvas);
+    userBatchInput.addEventListener('input', updateCanvas);
+    userPhotoInput.addEventListener('change', updateCanvas);
+
+    // ডাউনলোড বাটন
+    downloadBtn.addEventListener('click', () => {
+        const link = document.createElement('a');
+        link.download = 'iftar_batch_banner.png';
+        link.href = canvas.toDataURL('image/png', 1.0);
+        link.click();
+    });
+
 </script>
 
 </body>
