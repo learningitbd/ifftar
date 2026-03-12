@@ -3,8 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ব্যানার জেনারেটর</title>
+    <title>ব্যানার জেনারেটর - লার্নিং আইটি বিডি</title>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;700&display=swap');
+        
         body {
             font-family: 'Hind Siliguri', Arial, sans-serif;
             background-color: #f0f4f7;
@@ -36,7 +38,7 @@
             font-size: 15px;
         }
         .btn-generate {
-            background: #e67e22;
+            background: #d09e3b;
             color: white;
             border: none;
             padding: 15px;
@@ -48,11 +50,11 @@
             margin-top: 10px;
             transition: 0.3s;
         }
-        .btn-generate:hover { background: #d35400; }
+        .btn-generate:hover { background: #b58932; }
         
         #resultArea {
             margin-top: 30px;
-            display: none; /* প্রথমে লুকানো থাকবে */
+            display: none;
         }
         canvas {
             max-width: 100%;
@@ -62,7 +64,7 @@
         }
         .btn-download {
             display: inline-block;
-            background: linear-gradient(45deg, #ff8c00, #ff0000);
+            background: #d09e3b;
             color: white;
             text-decoration: none;
             padding: 12px 30px;
@@ -77,7 +79,7 @@
 <body>
 
 <div class="container">
-    <h2>ব্যানার তৈরি করুন</h2>
+    <h2>ব্যানার ডিজাইন করুন</h2>
     
     <div class="form-group">
         <label>আপনার নাম:</label>
@@ -97,7 +99,7 @@
     <button class="btn-generate" onclick="generateBanner()">ব্যানার তৈরি করুন</button>
 
     <div id="resultArea">
-        <h3 style="color: #27ae60;">আপনার ব্যানারটি তৈরি হয়েছে!</h3>
+        <h3 style="color: #27ae60;">ব্যানারটি তৈরি হয়েছে!</h3>
         <canvas id="bannerCanvas" width="1000" height="1000"></canvas>
         <br>
         <a id="downloadLink" class="btn-download">ডাউনলোড করুন</a>
@@ -109,7 +111,7 @@
     const ctx = canvas.getContext('2d');
     const templateImg = new Image();
     
-    // টেম্পলেট ছবির পাথ (আপনার ছবির নাম ও পাথ এখানে দিন)
+    // টেম্পলেট ছবির পাথ (আপনার মূল ফাইলের নাম এখানে দিন)
     templateImg.src = 'template.jpg'; 
 
     function generateBanner() {
@@ -118,7 +120,7 @@
         const photoInput = document.getElementById('userPhoto');
 
         if(!name || !batch || !photoInput.files[0]) {
-            alert("অনুগ্রহ করে সব তথ্য দিন এবং ছবি আপলোড করুন।");
+            alert("অনুগ্রহ করে আপনার নাম, ব্যাচ এবং ছবি প্রদান করুন।");
             return;
         }
 
@@ -129,33 +131,37 @@
         reader.onload = function(event) {
             const userImg = new Image();
             userImg.onload = function() {
-                // অরেঞ্জ বর্ডারের বক্সের মাপ (আপনার টেম্পলেট অনুযায়ী পজিশন)
-                const x = 215, y = 225, w = 310, h = 330;
+                // ছবির পজিশন এবং সাইজ (বর্ডার সহ অ্যাডজাস্টমেন্ট)
+                const x = 215, y = 225, w = 310, h = 330, radius = 10, borderSize = 3;
 
-                // ছবি অটো-অ্যাডজাস্ট করার লজিক (Crop and Fit)
+                // বর্ডার ড্র করা
+                ctx.strokeStyle = "#d09e3b";
+                ctx.lineWidth = borderSize;
+                ctx.beginPath();
+                ctx.roundRect(x - (borderSize/2), y - (borderSize/2), w + borderSize, h + borderSize, radius);
+                ctx.stroke();
+
+                // ছবির জন্য ক্লিপিং পাথ তৈরি (১০ পিএক্স রেডিয়াস সহ)
+                ctx.save();
+                ctx.beginPath();
+                ctx.roundRect(x, y, w, h, radius);
+                ctx.clip();
+
+                // ছবি অটো-অ্যাডজাস্ট (Crop and Fit)
                 let scale = Math.max(w / userImg.width, h / userImg.height);
                 let xCenter = (w - userImg.width * scale) / 2;
                 let yCenter = (h - userImg.height * scale) / 2;
-
-                ctx.save();
-                ctx.beginPath();
-                ctx.rect(x, y, w, h); // নির্দিষ্ট বক্সের ভেতর সীমাবদ্ধ রাখা
-                ctx.clip();
                 ctx.drawImage(userImg, x + xCenter, y + yCenter, userImg.width * scale, userImg.height * scale);
+                
                 ctx.restore();
 
-                // নাম এবং ব্যাচ ওভারলে ড্র করা
+                // টেক্সট এবং ব্যাচ বাটন ড্র করা
                 drawTextOverlay(name, batch);
 
-                // রেজাল্ট দেখানো
                 document.getElementById('resultArea').style.display = 'block';
-                
-                // ডাউনলোড লিংক আপডেট
                 const downloadLink = document.getElementById('downloadLink');
                 downloadLink.href = canvas.toDataURL('image/png');
                 downloadLink.download = name + '_banner.png';
-
-                // অটো স্ক্রল টু রেজাল্ট
                 document.getElementById('resultArea').scrollIntoView({behavior: "smooth"});
             };
             userImg.src = event.target.result;
@@ -164,13 +170,9 @@
     }
 
     function drawTextOverlay(name, batch) {
-        // ব্যাচ বক্স (অরেঞ্জ-রেড গ্রেডিয়েন্ট)
+        // ব্যাচ বাটন (আপনার দেয়া কালার #d09e3b)
         const bx = 205, by = 605, bw = 160, bh = 60;
-        const grad = ctx.createLinearGradient(bx, by, bx + bw, by);
-        grad.addColorStop(0, "#ff8c00"); 
-        grad.addColorStop(1, "#ff0000"); 
-
-        ctx.fillStyle = grad;
+        ctx.fillStyle = "#d09e3b";
         ctx.beginPath();
         if (ctx.roundRect) {
             ctx.roundRect(bx, by, bw, bh, 30);
