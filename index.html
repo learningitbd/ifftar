@@ -111,7 +111,6 @@
     const ctx = canvas.getContext('2d');
     const templateImg = new Image();
     
-    // টেম্পলেট ছবির পাথ (আপনার মূল ফাইলের নাম এখানে দিন)
     templateImg.src = 'template.jpg'; 
 
     function generateBanner() {
@@ -131,31 +130,30 @@
         reader.onload = function(event) {
             const userImg = new Image();
             userImg.onload = function() {
-                // ছবির পজিশন এবং সাইজ (বর্ডার সহ অ্যাডজাস্টমেন্ট)
-                const x = 215, y = 225, w = 310, h = 330, radius = 10, borderSize = 3;
+                // পজিশন সেটিংস
+                const x = 210, y = 225, w = 310, h = 330; 
+                const radius = 10;
+                const borderSize = 3;
 
-                // বর্ডার ড্র করা
-                ctx.strokeStyle = "#d09e3b";
-                ctx.lineWidth = borderSize;
-                ctx.beginPath();
-                ctx.roundRect(x - (borderSize/2), y - (borderSize/2), w + borderSize, h + borderSize, radius);
-                ctx.stroke();
-
-                // ছবির জন্য ক্লিপিং পাথ তৈরি (১০ পিএক্স রেডিয়াস সহ)
+                // ১. ক্লিপিং পাথ তৈরি (ছবিকে রাউন্ড করার জন্য)
                 ctx.save();
-                ctx.beginPath();
-                ctx.roundRect(x, y, w, h, radius);
+                roundRectPath(ctx, x, y, w, h, radius);
                 ctx.clip();
 
-                // ছবি অটো-অ্যাডজাস্ট (Crop and Fit)
+                // ২. ছবি ড্র করা
                 let scale = Math.max(w / userImg.width, h / userImg.height);
                 let xCenter = (w - userImg.width * scale) / 2;
                 let yCenter = (h - userImg.height * scale) / 2;
                 ctx.drawImage(userImg, x + xCenter, y + yCenter, userImg.width * scale, userImg.height * scale);
-                
                 ctx.restore();
 
-                // টেক্সট এবং ব্যাচ বাটন ড্র করা
+                // ৩. ছবির বর্ডার ড্র করা (ছবির উপরে ৩ পিক্সেল বর্ডার)
+                ctx.strokeStyle = "#d09e3b";
+                ctx.lineWidth = borderSize;
+                roundRectPath(ctx, x - borderSize/2, y - borderSize/2, w + borderSize, h + borderSize, radius);
+                ctx.stroke();
+
+                // ৪. নাম এবং ব্যাচ ওভারলে
                 drawTextOverlay(name, batch);
 
                 document.getElementById('resultArea').style.display = 'block';
@@ -169,25 +167,32 @@
         reader.readAsDataURL(photoInput.files[0]);
     }
 
+    // রাউন্ডেড রেকট্যাঙ্গেল পাথ তৈরির ফাংশন (সব ব্রাউজারের জন্য)
+    function roundRectPath(context, x, y, width, height, radius) {
+        context.beginPath();
+        context.moveTo(x + radius, y);
+        context.lineTo(x + width - radius, y);
+        context.quadraticCurveTo(x + width, y, x + width, y + radius);
+        context.lineTo(x + width, y + height - radius);
+        context.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+        context.lineTo(x + radius, y + height);
+        context.quadraticCurveTo(x, y + height, x, y + height - radius);
+        context.lineTo(x, y + radius);
+        context.quadraticCurveTo(x, y, x + radius, y);
+        context.closePath();
+    }
+
     function drawTextOverlay(name, batch) {
-        // ব্যাচ বাটন (আপনার দেয়া কালার #d09e3b)
         const bx = 205, by = 605, bw = 160, bh = 60;
         ctx.fillStyle = "#d09e3b";
-        ctx.beginPath();
-        if (ctx.roundRect) {
-            ctx.roundRect(bx, by, bw, bh, 30);
-        } else {
-            ctx.rect(bx, by, bw, bh); 
-        }
+        roundRectPath(ctx, bx, by, bw, bh, 30);
         ctx.fill();
 
-        // ব্যাচ টেক্সট
         ctx.fillStyle = "white";
         ctx.font = "bold 30px Arial";
         ctx.textAlign = "center";
         ctx.fillText(batch, bx + bw/2, by + 40);
 
-        // নাম টেক্সট
         ctx.fillStyle = "#2c3e50";
         ctx.font = "bold 40px Arial";
         ctx.textAlign = "left";
